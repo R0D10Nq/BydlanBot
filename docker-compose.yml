@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  BydlanBot:
+    build: .
+    container_name: BydlanBot
+    restart: unless-stopped
+    
+    # Environment variables from .env file
+    env_file:
+      - .env
+    
+    # Volumes for persistent data
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./.env:/app/.env:ro
+    
+    # Network configuration
+    network_mode: "host"  # For LM Studio access on localhost
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os; exit(0 if os.path.exists('/app/bot_memory.db') else 1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# Optional: if you want to run LM Studio in Docker too
+# lm-studio:
+#   image: lmstudio/server:latest
+#   container_name: lm-studio
+#   ports:
+#     - "1234:1234"
+#   volumes:
+#     - ./models:/app/models
+#   environment:
+#     - MODEL_PATH=/app/models/your-model.gguf
+#   restart: unless-stopped
